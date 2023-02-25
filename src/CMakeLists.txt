@@ -121,7 +121,7 @@ endif()
 # libraries:
 SET(libunwind_la_SOURCES_common
     ${libunwind_la_SOURCES_os}
-    mi/init.c mi/flush_cache.c mi/mempool.c mi/strerror.c
+    mi/strerror.c
 )
 
 SET(libunwind_la_SOURCES_local_unwind
@@ -239,9 +239,42 @@ SET(libunwind_arm_la_SOURCES_arm
     arm/Gex_tables.c arm/Gstash_frame.c arm/Gtrace.c
 )
 
+# The list of files that go both into libunwind and libunwind-x86:
+SET(libunwind_la_SOURCES_x86_common
+    x86/is_fpreg.c x86/regname.c
+)
+
+# The list of files that go into libunwind:
+SET(libunwind_la_SOURCES_x86
+    ${libunwind_la_SOURCES_x86_common}
+    ${libunwind_la_SOURCES_x86_os_local}
+    ${libunwind_la_SOURCES_local}
+    x86/setcontext.S
+    x86/Lapply_reg_state.c x86/Lreg_states_iterate.c
+    x86/Lcreate_addr_space.c x86/Lget_save_loc.c x86/Lglobal.c
+    x86/Linit.c x86/Linit_local.c x86/Linit_remote.c
+    x86/Lget_proc_info.c x86/Lregs.c x86/Lresume.c
+    x86/Lstash_frame.c x86/Lstep.c x86/Ltrace.c x86/getcontext.S
+)
+
+# The list of files that go into libunwind-x86:
+SET(libunwind_x86_la_SOURCES_x86
+    ${libunwind_la_SOURCES_x86_common}
+    ${libunwind_la_SOURCES_x86_os}
+    ${libunwind_la_SOURCES_generic}
+    mi/flush_cache.c
+    mi/mempool.c
+    mi/init.c
+    x86/Gapply_reg_state.c x86/Greg_states_iterate.c
+    x86/Gcreate_addr_space.c x86/Gget_save_loc.c
+    x86/Gglobal.c
+    x86/Ginit.c x86/Ginit_local.c x86/Ginit_remote.c
+    x86/Gget_proc_info.c x86/Gregs.c x86/Gresume.c
+    x86/Gstep.c
+)
+
 # The list of files that go both into libunwind and libunwind-x86_64:
 SET(libunwind_la_SOURCES_x86_64_common
-    ${libunwind_la_SOURCES_common}
     x86_64/is_fpreg.c x86_64/regname.c
 )
 
@@ -263,6 +296,9 @@ SET(libunwind_x86_64_la_SOURCES_x86_64
     ${libunwind_la_SOURCES_x86_64_common}
     ${libunwind_la_SOURCES_x86_64_os}
     ${libunwind_la_SOURCES_generic}
+    mi/flush_cache.c
+    mi/mempool.c
+    mi/init.c
     x86_64/Gapply_reg_state.c x86_64/Greg_states_iterate.c
     x86_64/Gcreate_addr_space.c x86_64/Gget_save_loc.c x86_64/Gglobal.c
     x86_64/Ginit.c x86_64/Ginit_local.c x86_64/Ginit_remote.c
@@ -341,6 +377,11 @@ elseif(TARGET_AMD64)
     SET(libunwind_remote_la_SOURCES             ${libunwind_x86_64_la_SOURCES_x86_64})
     SET(libunwind_elf_la_SOURCES                ${libunwind_elf64_la_SOURCES})
     list(APPEND libunwind_setjmp_la_SOURCES     x86_64/longjmp.S x86_64/siglongjmp.SA)
+elseif(TARGET_X86)
+    SET(libunwind_la_SOURCES                    ${libunwind_la_SOURCES_x86})
+    SET(libunwind_remote_la_SOURCES             ${libunwind_x86_la_SOURCES_x86})
+    SET(libunwind_elf_la_SOURCES                ${libunwind_elf32_la_SOURCES})
+    list(APPEND libunwind_setjmp_la_SOURCES     x86/longjmp.S x86/siglongjmp.SA)
 elseif(TARGET_S390X)
     SET(libunwind_la_SOURCES                    ${libunwind_la_SOURCES_s390x})
     SET(libunwind_remote_la_SOURCES             ${libunwind_s390x_la_SOURCES_s390x})
@@ -351,15 +392,23 @@ elseif(TARGET_LOONGARCH64)
     SET(libunwind_elf_la_SOURCES                ${libunwind_elf64_la_SOURCES})
 endif()
 
-add_library(libunwind
-  OBJECT
-  remote/win/missing-functions.c
+add_library(unwind
+  STATIC
+  ${libunwind_la_SOURCES_common}
+)
+
+add_library(unwind-${arch}
+  STATIC
+  #remote/win/missing-functions.c
   # ${libunwind_la_SOURCES}  Local...
   ${libunwind_remote_la_SOURCES}
     # Commented out above for LOCAL + REMOTE runtime build
     mi/Gget_accessors.c
   # ${libunwind_dwarf_local_la_SOURCES}
-  ${libunwind_dwarf_common_la_SOURCES}
   ${libunwind_dwarf_generic_la_SOURCES}
+  ${libunwind_dwarf_common_la_SOURCES}
   ${libunwind_elf_la_SOURCES}
 )
+
+target_compile_definitions(unwind PRIVATE -DUNW_REMOTE_ONLY)
+target_compile_definitions(unwind-${arch} PRIVATE -DUNW_REMOTE_ONLY)

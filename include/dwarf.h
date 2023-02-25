@@ -220,6 +220,9 @@ dwarf_cfa_t;
 #define DW_EH_PE_funcrel        0x40    /* start-of-procedure-relative */
 #define DW_EH_PE_aligned        0x50    /* aligned pointer */
 
+#define dwarf_reg_state_pool            UNW_OBJ (dwarf_reg_state_pool)
+#define dwarf_cie_info_pool            UNW_OBJ (dwarf_cie_info_pool)
+
 extern struct mempool dwarf_reg_state_pool;
 extern struct mempool dwarf_cie_info_pool;
 

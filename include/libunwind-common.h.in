@@ -279,6 +279,8 @@ unw_save_loc_t;
 #define unw_regname			UNW_ARCH_OBJ(regname)
 #define unw_flush_cache			UNW_ARCH_OBJ(flush_cache)
 #define unw_strerror			UNW_ARCH_OBJ(strerror)
+#define unw_page_size UNW_ARCH_OBJ(page_size)
+
 
 extern unw_addr_space_t unw_create_addr_space (unw_accessors_t *, int);
 extern void unw_destroy_addr_space (unw_addr_space_t);

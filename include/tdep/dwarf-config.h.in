@@ -1,6 +1,8 @@
 /* Provide a real file - not a symlink - as it would cause multiarch conflicts
    when multiple different arch releases are installed simultaneously.  */
 
+#ifndef UNW_REMOTE_ONLY
+
 #if defined __aarch64__
 # include "tdep-aarch64/dwarf-config.h"
 #elif defined __arm__
@@ -31,4 +33,9 @@
 # include "tdep-loongarch64/dwarf-config.h"
 #else
 # error "Unsupported arch"
+#endif
+#else
+
+# include "tdep-@arch@/dwarf-config.h"
+
 #endif
